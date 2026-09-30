@@ -1,0 +1,144 @@
+.entry-logs-page {
+  width: 100%;
+}
+
+.export-btn {
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.export-btn:hover {
+  background: #f9fafb;
+}
+
+.log-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.log-summary-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+
+.log-summary-card span {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.log-summary-card strong {
+  font-size: 25px;
+  color: #111827;
+}
+
+.log-summary-card.warning strong {
+  color: #dc2626;
+}
+
+.logs-container {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.logs-toolbar {
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5e7eb;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logs-toolbar h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #111827;
+}
+
+.log-filters {
+  display: flex;
+  gap: 10px;
+}
+
+.date-filter,
+.status-filter {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 12px;
+}
+
+.logs-table-wrapper {
+  overflow-x: auto;
+}
+
+.logs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.logs-table th {
+  padding: 13px 18px;
+  background: #f9fafb;
+  text-align: left;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.logs-table td {
+  padding: 16px 18px;
+  border-top: 1px solid #f1f5f9;
+  color: #374151;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.logs-table td strong {
+  color: #111827;
+}
+
+.log-status {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.log-status.authorized {
+  color: #16a34a;
+}
+
+.log-status.unauthorized {
+  color: #dc2626;
+}
+
+@media (max-width: 800px) {
+  .log-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .logs-toolbar {
+    align-items: flex-start;
+    gap: 15px;
+    flex-direction: column;
+  }
+
+  .log-filters {
+    width: 100%;
+  }
+}

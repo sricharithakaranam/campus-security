@@ -1,21 +1,47 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
+import EntryLogs from "./pages/EntryLogs";
 import Dashboard from "./pages/Dashboard";
+import Students from "./pages/Students";
+
 import "./styles/global.css";
 
 function App() {
   return (
-    <div className="app">
-      <Navbar />
+    <BrowserRouter>
+      <div className="app">
 
-      <div className="app-body">
-        <Sidebar />
+        <Navbar />
 
-        <main className="main-content">
-          <Dashboard />
-        </main>
+        <div className="app-body">
+
+          <Sidebar />
+
+          <main className="main-content">
+            <Routes>
+
+              <Route
+                path="/"
+                element={<Dashboard />}
+              />
+
+              <Route
+                path="/students"
+                element={<Students />}
+              />
+<Route
+  path="/entry-logs"
+  element={<EntryLogs />}
+/>
+            </Routes>
+          </main>
+
+        </div>
+
       </div>
-    </div>
+    </BrowserRouter>
   );
 }
 
