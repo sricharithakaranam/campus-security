@@ -1,0 +1,88 @@
+.sidebar {
+  width: 230px;
+  min-height: calc(100vh - 72px);
+  background: #111827;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar-nav {
+  padding: 24px 14px;
+}
+
+.nav-section {
+  margin-bottom: 28px;
+}
+
+.nav-title {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #9ca3af;
+  padding: 0 12px;
+  margin-bottom: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  margin-bottom: 4px;
+  border-radius: 7px;
+  color: #d1d5db;
+  text-decoration: none;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+.nav-item span {
+  width: 20px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.nav-item:hover {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+.nav-item.active {
+  background: #374151;
+  color: #ffffff;
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid #1f2937;
+}
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #1f2937;
+}
+
+.security-badge > span {
+  font-size: 18px;
+}
+
+.security-badge strong,
+.security-badge small {
+  display: block;
+}
+
+.security-badge strong {
+  font-size: 11px;
+}
+
+.security-badge small {
+  margin-top: 3px;
+  font-size: 9px;
+  color: #9ca3af;
+}
