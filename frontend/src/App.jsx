@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import Monitoring from "./pages/Monitoring";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import EntryLogs from "./pages/EntryLogs";
@@ -31,6 +31,10 @@ function App() {
                 path="/students"
                 element={<Students />}
               />
+              <Route
+  path="/monitoring"
+  element={<Monitoring />}
+/>
 <Route
   path="/entry-logs"
   element={<EntryLogs />}

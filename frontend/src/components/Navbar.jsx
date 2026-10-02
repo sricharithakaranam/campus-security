@@ -6,7 +6,7 @@ function Navbar() {
       <div className="navbar-brand">
         <div className="brand-icon">🛡️</div>
         <div>
-          <h1>CampusSecure</h1>
+          <h1>Campus Secure</h1>
           <span>AI Campus Monitoring</span>
         </div>
       </div>

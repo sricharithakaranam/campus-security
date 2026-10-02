@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import FaceCapture from "../components/FaceCapture";
 import "../styles/Students.css";
 
 function Students() {
@@ -6,6 +7,7 @@ function Students() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [faceImage, setFaceImage] = useState(null);
 
   const [formData, setFormData] = useState({
     student_id: "",
@@ -48,6 +50,14 @@ function Students() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    // For now, require a face capture
+    if (!faceImage) {
+      setError("Please capture the student's face before saving.");
+      return;
+    }
+
+    setError("");
+
     try {
       const response = await fetch("http://localhost:5000/students", {
         method: "POST",
@@ -75,6 +85,7 @@ function Students() {
         year: "",
       });
 
+      setFaceImage(null);
       setShowForm(false);
     } catch (err) {
       console.error(err);
@@ -85,9 +96,11 @@ function Students() {
   return (
     <div className="students-page">
 
+      {/* PAGE HEADER */}
       <div className="page-header">
         <div>
           <h2>Students</h2>
+
           <p>
             Manage registered students and their identity information.
           </p>
@@ -95,12 +108,16 @@ function Students() {
 
         <button
           className="add-student-btn"
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowForm(!showForm);
+            setError("");
+          }}
         >
           {showForm ? "Cancel" : "+ Add Student"}
         </button>
       </div>
 
+      {/* ADD STUDENT FORM */}
       {showForm && (
         <div className="add-student-form">
 
@@ -110,8 +127,10 @@ function Students() {
 
             <div className="form-grid">
 
+              {/* STUDENT ID */}
               <div className="form-group">
                 <label>Student ID</label>
+
                 <input
                   type="text"
                   name="student_id"
@@ -122,8 +141,10 @@ function Students() {
                 />
               </div>
 
+              {/* NAME */}
               <div className="form-group">
                 <label>Name</label>
+
                 <input
                   type="text"
                   name="name"
@@ -134,8 +155,10 @@ function Students() {
                 />
               </div>
 
+              {/* DEPARTMENT */}
               <div className="form-group">
                 <label>Department</label>
+
                 <input
                   type="text"
                   name="department"
@@ -146,8 +169,10 @@ function Students() {
                 />
               </div>
 
+              {/* YEAR */}
               <div className="form-group">
                 <label>Year</label>
+
                 <input
                   type="number"
                   name="year"
@@ -162,17 +187,36 @@ function Students() {
 
             </div>
 
+            {/* FACE REGISTRATION */}
+            <div className="face-registration-section">
+
+              <h4>Face Registration</h4>
+
+              <p>
+                Capture the student's face for identity verification.
+              </p>
+
+              <FaceCapture
+                onCapture={(image) => {
+                  setFaceImage(image);
+                }}
+              />
+
+            </div>
+
+            {/* SAVE BUTTON */}
             <button
               type="submit"
               className="save-student-btn"
             >
-              Save Student
+              Register Student
             </button>
 
           </form>
         </div>
       )}
 
+      {/* SUMMARY */}
       <div className="students-summary">
 
         <div>
@@ -192,9 +236,24 @@ function Students() {
 
       </div>
 
+      {/* ERROR */}
+      {error && (
+        <p
+          style={{
+            padding: "10px",
+            color: "red",
+            textAlign: "center",
+          }}
+        >
+          {error}
+        </p>
+      )}
+
+      {/* STUDENTS TABLE */}
       <div className="students-table-container">
 
         <div className="table-header">
+
           <h3>Registered Students</h3>
 
           <input
@@ -202,17 +261,12 @@ function Students() {
             placeholder="Search students..."
             className="student-search"
           />
+
         </div>
 
         {loading && (
           <p style={{ padding: "20px" }}>
             Loading students...
-          </p>
-        )}
-
-        {error && (
-          <p style={{ padding: "20px", color: "red" }}>
-            {error}
           </p>
         )}
 
@@ -231,18 +285,28 @@ function Students() {
             </thead>
 
             <tbody>
+
               {students.map((student) => (
+
                 <tr key={student.id}>
 
                   <td>
-                    <strong>{student.student_id}</strong>
+                    <strong>
+                      {student.student_id}
+                    </strong>
                   </td>
 
-                  <td>{student.name}</td>
+                  <td>
+                    {student.name}
+                  </td>
 
-                  <td>{student.department}</td>
+                  <td>
+                    {student.department}
+                  </td>
 
-                  <td>Year {student.year}</td>
+                  <td>
+                    Year {student.year}
+                  </td>
 
                   <td>
                     <span className="student-status">
@@ -257,7 +321,9 @@ function Students() {
                   </td>
 
                 </tr>
+
               ))}
+
             </tbody>
 
           </table>

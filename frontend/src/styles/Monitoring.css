@@ -1,0 +1,344 @@
+.monitoring-page {
+  width: 100%;
+}
+
+.monitoring-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.monitoring-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #111827;
+}
+
+.monitoring-header p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.monitoring-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #ffffff;
+  font-size: 12px;
+  color: #374151;
+}
+
+.live-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+/* Main Layout */
+
+.monitoring-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+}
+
+/* Camera List */
+
+.camera-list {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  height: fit-content;
+}
+
+.camera-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.camera-list-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.camera-list-header span {
+  font-size: 11px;
+  background: #f3f4f6;
+  padding: 4px 7px;
+  border-radius: 5px;
+}
+
+.camera-item {
+  width: 100%;
+  display: flex;
+  gap: 11px;
+  padding: 14px;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.camera-item:hover {
+  background: #f9fafb;
+}
+
+.camera-item.selected {
+  background: #f3f4f6;
+}
+
+.camera-icon {
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: #111827;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-info strong,
+.camera-info span,
+.camera-info small {
+  display: block;
+}
+
+.camera-info strong {
+  font-size: 12px;
+  color: #111827;
+}
+
+.camera-info span {
+  margin-top: 3px;
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.camera-info small {
+  margin-top: 6px;
+  font-size: 9px;
+}
+
+.camera-online {
+  color: #16a34a;
+}
+
+.camera-offline {
+  color: #dc2626;
+}
+
+/* Camera View */
+
+.camera-view-section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.camera-view-header {
+  height: 65px;
+  padding: 0 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.camera-view-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.camera-view-header span {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.recording-badge {
+  color: #dc2626 !important;
+  font-size: 10px !important;
+  font-weight: 600;
+}
+
+/* Camera Screen */
+
+.camera-screen {
+  position: relative;
+  height: 480px;
+  background: #111827;
+  overflow: hidden;
+}
+
+.camera-placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  text-align: center;
+}
+
+.camera-placeholder-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+  margin-bottom: 15px;
+}
+
+.camera-placeholder h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.camera-placeholder p {
+  margin: 0;
+  max-width: 350px;
+  color: #9ca3af;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.camera-connection {
+  margin-top: 15px;
+  color: #6b7280;
+  font-size: 10px;
+}
+
+.camera-overlay {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  color: #d1d5db;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+
+/* Recognition */
+
+.recognition-panel {
+  margin-top: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.recognition-header {
+  padding: 17px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recognition-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.recognition-header p {
+  margin: 4px 0 0;
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.recognition-active {
+  color: #16a34a;
+  font-size: 10px;
+}
+
+.recognition-content {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+}
+
+.face-placeholder {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 24px;
+}
+
+.recognition-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.recognition-label {
+  font-size: 9px;
+  color: #9ca3af;
+  margin-bottom: 5px;
+}
+
+.recognition-info strong {
+  font-size: 14px;
+  color: #374151;
+}
+
+.recognition-info p {
+  margin: 5px 0 0;
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .monitoring-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .camera-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .camera-list-header {
+    display: none;
+  }
+}
+
+@media (max-width: 650px) {
+  .monitoring-header {
+    align-items: flex-start;
+    gap: 15px;
+    flex-direction: column;
+  }
+
+  .camera-list {
+    grid-template-columns: 1fr;
+  }
+
+  .camera-screen {
+    height: 350px;
+  }
+}
