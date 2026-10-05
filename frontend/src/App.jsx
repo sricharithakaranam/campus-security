@@ -1,50 +1,84 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
 import Monitoring from "./pages/Monitoring";
+import Students from "./pages/Students";
+import EntryLogs from "./pages/EntryLogs";
+
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import EntryLogs from "./pages/EntryLogs";
-import Dashboard from "./pages/Dashboard";
-import Students from "./pages/Students";
 
 import "./styles/global.css";
+
+function DashboardLayout({ children }) {
+  return (
+    <div className="app">
+      <Navbar />
+
+      <div className="app-body">
+        <Sidebar />
+
+        <main className="main-content">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="app">
+      <Routes>
 
-        <Navbar />
+        {/* 🏠 Public Home Page */}
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-        <div className="app-body">
+        {/* 📊 Dashboard */}
+        <Route
+          path="/dashboard"
+          element={
+            <DashboardLayout>
+              <Dashboard />
+            </DashboardLayout>
+          }
+        />
 
-          <Sidebar />
+        {/* 👨‍🎓 Students */}
+        <Route
+          path="/students"
+          element={
+            <DashboardLayout>
+              <Students />
+            </DashboardLayout>
+          }
+        />
 
-          <main className="main-content">
-            <Routes>
+        {/* 📹 Live Monitoring */}
+        <Route
+          path="/monitoring"
+          element={
+            <DashboardLayout>
+              <Monitoring />
+            </DashboardLayout>
+          }
+        />
 
-              <Route
-                path="/"
-                element={<Dashboard />}
-              />
+        {/* 🕒 Entry Logs */}
+        <Route
+          path="/entry-logs"
+          element={
+            <DashboardLayout>
+              <EntryLogs />
+            </DashboardLayout>
+          }
+        />
 
-              <Route
-                path="/students"
-                element={<Students />}
-              />
-              <Route
-  path="/monitoring"
-  element={<Monitoring />}
-/>
-<Route
-  path="/entry-logs"
-  element={<EntryLogs />}
-/>
-            </Routes>
-          </main>
-
-        </div>
-
-      </div>
+      </Routes>
     </BrowserRouter>
   );
 }
