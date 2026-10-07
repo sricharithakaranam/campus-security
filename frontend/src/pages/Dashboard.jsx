@@ -4,24 +4,38 @@ import "../styles/Dashboard.css";
 function Dashboard() {
   return (
     <div className="dashboard">
-
+      {/* Dashboard Header */}
       <div className="dashboard-header">
-        <div>
-          <h2>Security Dashboard</h2>
-          <p>Real-time overview of campus security activity.</p>
+        <div className="welcome-content">
+          <div>
+            <h2>Welcome Back, Admin!</h2>
+            <p>
+              Here's what's happening with your campus security system today.
+            </p>
+          </div>
         </div>
 
-        <div className="dashboard-time">
-          <span className="live-dot"></span>
-          Live Monitoring
+        <div className="dashboard-date">
+          <span className="calendar-icon">📅</span>
+
+          <div>
+            <strong>06 Oct 2026</strong>
+            <small>
+              {new Date().toLocaleTimeString("en-IN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </small>
+          </div>
         </div>
       </div>
 
+      {/* Statistics Cards */}
       <div className="stats-grid">
-
         <StatCard
-          icon="♙"
-          title="Registered Students"
+          icon="👥"
+          title="Total Registered"
           value="1"
           description="Currently registered"
           type="students"
@@ -44,24 +58,13 @@ function Dashboard() {
         />
 
         <StatCard
-          icon="▣"
+          icon="📹"
           title="Active Cameras"
           value="0"
           description="Cameras online"
           type="cameras"
         />
-
       </div>
-
-      <div className="dashboard-placeholder">
-        <div className="placeholder-icon">◉</div>
-        <h3>Live Activity</h3>
-        <p>
-          CCTV recognition activity will appear here once the AI service
-          is connected.
-        </p>
-      </div>
-
     </div>
   );
 }
