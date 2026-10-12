@@ -143,41 +143,35 @@ def decode_image(image_data: str):
 # CREATE FACE EMBEDDING
 # =========================================================
 
-def create_embedding(image):
-
+def create_embeddings(image):
     height, width = image.shape[:2]
 
-    detector.setInputSize(
-        (width, height)
-    )
-
+    detector.setInputSize((width, height))
     _, faces = detector.detect(image)
 
     if faces is None or len(faces) == 0:
+        return []
 
-        raise HTTPException(
-            status_code=400,
-            detail="No face detected",
-        )
+    results = []
 
-    # Select largest detected face
-    face = max(
-        faces,
-        key=lambda f: f[2] * f[3],
-    )
+    for face in faces:
+        try:
+            aligned_face = recognizer.alignCrop(image, face)
+            feature = recognizer.feature(aligned_face)
 
-    # Align face
-    aligned_face = recognizer.alignCrop(
-        image,
-        face,
-    )
+            results.append({
+                "box": [
+                    round(float(face[0])),
+                    round(float(face[1])),
+                    round(float(face[2])),
+                    round(float(face[3])),
+                ],
+                "embedding": feature,
+            })
+        except Exception as error:
+            print("Could not process a detected face:", error)
 
-    # Generate embedding
-    feature = recognizer.feature(
-        aligned_face
-    )
-
-    return feature
+    return results
 
 
 # =========================================================
@@ -305,37 +299,22 @@ def enroll_face(
 # =========================================================
 
 @app.post("/recognize")
-def recognize_face(
-    request: FaceRequest,
-):
+def recognize_face(request: FaceRequest):
+    image = decode_image(request.image)
 
-    # Decode image
-    image = decode_image(
-        request.image
-    )
+    detected_faces = create_embeddings(image)
 
-    try:
-
-        # Create embedding
-        detected_embedding = create_embedding(
-            image
-        )
-
-    except HTTPException:
-
+    if not detected_faces:
         return {
-            "recognized": False,
-            "status": "unknown",
-            "message": "Unknown / Needs Review",
+            "success": True,
+            "face_count": 0,
+            "results": [],
+            "message": "No faces detected",
         }
 
-    # Get enrolled faces
     with get_db() as conn:
-
         with conn.cursor() as cur:
-
-            cur.execute(
-                """
+            cur.execute("""
                 SELECT
                     fe.student_id,
                     fe.embedding,
@@ -343,96 +322,73 @@ def recognize_face(
                     s.name,
                     s.department,
                     s.year
-
                 FROM face_embeddings fe
-
-                JOIN students s
-                    ON s.id = fe.student_id
-                """
-            )
-
+                JOIN students s ON s.id = fe.student_id
+            """)
             records = cur.fetchall()
 
-    best_match = None
-    best_score = -1
+    known_embeddings = []
 
-
-    # Compare detected face
-    # with every registered face
     for record in records:
+        try:
+            known_embeddings.append({
+                "database_id": record[0],
+                "embedding": pickle.loads(record[1]),
+                "student_id": record[2],
+                "name": record[3],
+                "department": record[4],
+                "year": record[5],
+            })
+        except Exception as error:
+            print("Could not load stored embedding:", error)
 
-        database_student_id = record[0]
-
-        stored_embedding = pickle.loads(
-            record[1]
-        )
-
-        score = recognizer.match(
-            detected_embedding,
-            stored_embedding,
-            cv2.FaceRecognizerSF_FR_COSINE,
-        )
-
-        if score > best_score:
-
-            best_score = score
-
-            best_match = {
-                "database_id":
-                    database_student_id,
-
-                "student_id":
-                    record[2],
-
-                "name":
-                    record[3],
-
-                "department":
-                    record[4],
-
-                "year":
-                    record[5],
-            }
-
-
-    # Initial recognition threshold.
-    # We will test and tune this with
-    # your actual student/camera conditions.
     MATCH_THRESHOLD = 0.363
+    results = []
 
+    for detected in detected_faces:
+        best_match = None
+        best_score = -1.0
 
-    # No reliable match
-    if (
-        best_match is None
-        or best_score < MATCH_THRESHOLD
-    ):
+        for known in known_embeddings:
+            score = recognizer.match(
+                detected["embedding"],
+                known["embedding"],
+                cv2.FaceRecognizerSF_FR_COSINE,
+            )
 
-        return {
-            "recognized": False,
-            "status": "unknown",
-            "confidence":
-                round(
-                    float(best_score),
-                    4,
+            if score > best_score:
+                best_score = float(score)
+                best_match = known
+
+        if best_match is not None and best_score >= MATCH_THRESHOLD:
+            results.append({
+                "box": detected["box"],
+                "recognized": True,
+                "status": "recognized",
+                "confidence": round(best_score, 4),
+                "student": {
+                    "database_id": best_match["database_id"],
+                    "student_id": best_match["student_id"],
+                    "name": best_match["name"],
+                    "department": best_match["department"],
+                    "year": best_match["year"],
+                },
+            })
+        else:
+            results.append({
+                "box": detected["box"],
+                "recognized": False,
+                "status": "unknown",
+                "confidence": (
+                    round(best_score, 4)
+                    if best_match is not None
+                    else None
                 ),
-            "message":
-                "Unknown / Needs Review",
-        }
+                "message": "Unknown / Needs Review",
+            })
 
-
-    # Successful match
     return {
-
-        "recognized": True,
-
-        "status": "authorized",
-
-        "confidence":
-            round(
-                float(best_score),
-                4,
-            ),
-
-        "student":
-            best_match,
+        "success": True,
+        "face_count": len(results),
+        "results": results,
     }

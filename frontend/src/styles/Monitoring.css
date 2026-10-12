@@ -504,3 +504,61 @@
     padding: 15px;
   }
 }
+
+.monitor-message {
+  margin: 0 0 16px;
+  color: #536078;
+  font-size: 13px;
+}
+
+.multi-face-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  max-height: 650px;
+  overflow-y: auto;
+}
+
+.face-result-card {
+  padding: 16px;
+  border: 1px solid #e5e9f1;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.face-result-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.face-number {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.face-result-card h3 {
+  margin: 0 0 12px;
+  color: #172033;
+  font-size: 17px;
+}
+
+.face-result-card p {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.face-box-info {
+  margin-bottom: 0;
+  font-size: 11px !important;
+}
+
+.face-result-card .student-details {
+  margin-top: 8px;
+}
