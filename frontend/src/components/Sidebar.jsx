@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
 import {
   Home,
   Video,
@@ -33,15 +34,11 @@ const groups = [
   },
   {
     title: "SYSTEM",
-    items: [
-      ["cameras", "Cameras", Video],
-      ["reports", "Reports", BarChart3],
-      ["settings", "Settings", Settings],
-    ],
+    items: [["reports", "Reports", BarChart3]],
   },
 ];
 
-export default function Sidebar({ page, setPage }) {
+export default function Sidebar() {
   const [alerts, setAlerts] = useState(0); // to preview the badge, use useState(3)
 
   useEffect(() => {
@@ -73,20 +70,39 @@ export default function Sidebar({ page, setPage }) {
           <div key={g.title}>
             <p className="sb-title">{g.title}</p>
             {g.items.map(([id, label, Icon]) => (
-              <button
+              <NavLink
                 key={id}
-                className={"sb-item" + (page === id ? " active" : "")}
-                onClick={() => setPage(id)}
+                to={
+                  id === "dashboard"
+                    ? "/dashboard"
+                    : id === "monitoring"
+                      ? "/monitoring"
+                      : id === "students"
+                        ? "/students"
+                        : id === "logs"
+                          ? "/entry-logs"
+                          : id === "alerts"
+                            ? "/alerts"
+                            : id === "cameras"
+                              ? "/cameras"
+                              : id === "reports"
+                                ? "/reports"
+                                : "/settings"
+                }
+                className={({ isActive }) =>
+                  "sb-item" + (isActive ? " active" : "")
+                }
               >
                 <Icon size={19} />
                 <span>{label}</span>
+
                 {id === "alerts" && alerts > 0 && (
                   <>
                     <i className="sb-badge">{alerts}</i>
                     <ChevronRight size={16} className="sb-chev" />
                   </>
                 )}
-              </button>
+              </NavLink>
             ))}
           </div>
         ))}

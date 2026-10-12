@@ -19,10 +19,37 @@ function DashboardLayout({ children }) {
       <div className="app-body">
         <Sidebar />
 
-        <main className="main-content">
-          {children}
-        </main>
+        <main className="main-content">{children}</main>
       </div>
+    </div>
+  );
+}
+
+/* Temporary pages for modules that don't have page files yet */
+
+function Alerts() {
+  return (
+    <div>
+      <h2>Alerts</h2>
+      <p>Security alerts will appear here.</p>
+    </div>
+  );
+}
+
+function Cameras() {
+  return (
+    <div>
+      <h2>Cameras</h2>
+      <p>Camera information will appear here.</p>
+    </div>
+  );
+}
+
+function Settings() {
+  return (
+    <div>
+      <h2>Settings</h2>
+      <p>System settings will appear here.</p>
     </div>
   );
 }
@@ -31,14 +58,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* HOME */}
+        <Route path="/" element={<Home />} />
 
-        {/* 🏠 Public Home Page */}
-        <Route
-          path="/"
-          element={<Home />}
-        />
-
-        {/* 📊 Dashboard */}
+        {/* DASHBOARD */}
         <Route
           path="/dashboard"
           element={
@@ -48,17 +71,7 @@ function App() {
           }
         />
 
-        {/* 👨‍🎓 Students */}
-        <Route
-          path="/students"
-          element={
-            <DashboardLayout>
-              <Students />
-            </DashboardLayout>
-          }
-        />
-
-        {/* 📹 Live Monitoring */}
+        {/* LIVE MONITORING */}
         <Route
           path="/monitoring"
           element={
@@ -68,7 +81,17 @@ function App() {
           }
         />
 
-        {/* 🕒 Entry Logs */}
+        {/* STUDENTS */}
+        <Route
+          path="/students"
+          element={
+            <DashboardLayout>
+              <Students />
+            </DashboardLayout>
+          }
+        />
+
+        {/* ENTRY LOGS */}
         <Route
           path="/entry-logs"
           element={
@@ -78,6 +101,35 @@ function App() {
           }
         />
 
+        {/* ALERTS */}
+        <Route
+          path="/alerts"
+          element={
+            <DashboardLayout>
+              <Alerts />
+            </DashboardLayout>
+          }
+        />
+
+        {/* CAMERAS */}
+        <Route
+          path="/cameras"
+          element={
+            <DashboardLayout>
+              <Cameras />
+            </DashboardLayout>
+          }
+        />
+
+        {/* SETTINGS */}
+        <Route
+          path="/settings"
+          element={
+            <DashboardLayout>
+              <Settings />
+            </DashboardLayout>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
