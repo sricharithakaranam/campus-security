@@ -13,6 +13,16 @@ function FaceCapture({ onCapture }) {
     try {
       setCameraError("");
 
+      // Reuse existing stream if available
+      if (streamRef.current) {
+        if (videoRef.current) {
+          videoRef.current.srcObject = streamRef.current;
+        }
+
+        setCameraStarted(true);
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: 640,
@@ -31,6 +41,7 @@ function FaceCapture({ onCapture }) {
       setCameraStarted(true);
     } catch (error) {
       console.error(error);
+
       setCameraError(
         "Camera access was denied or the camera is unavailable."
       );
@@ -38,9 +49,17 @@ function FaceCapture({ onCapture }) {
   };
 
   const captureFace = () => {
-    if (!videoRef.current) return;
-
     const video = videoRef.current;
+
+    if (!video || video.readyState < 2) {
+      setCameraError("Camera is not ready yet. Please wait a moment.");
+      return;
+    }
+
+    if (!video.videoWidth || !video.videoHeight) {
+      setCameraError("Camera frame is not available. Please try again.");
+      return;
+    }
 
     const canvas = document.createElement("canvas");
 
@@ -68,10 +87,20 @@ function FaceCapture({ onCapture }) {
 
   const retakeFace = () => {
     setCapturedImage(null);
+    setCameraError("");
 
     if (onCapture) {
       onCapture(null);
     }
+
+    // Wait until React recreates the video element,
+    // then attach the existing camera stream to it.
+    setTimeout(() => {
+      if (videoRef.current && streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+        videoRef.current.play().catch(() => {});
+      }
+    }, 0);
   };
 
   useEffect(() => {
@@ -80,13 +109,14 @@ function FaceCapture({ onCapture }) {
         streamRef.current.getTracks().forEach((track) => {
           track.stop();
         });
+
+        streamRef.current = null;
       }
     };
   }, []);
 
   return (
     <div className="face-capture">
-
       <div className="face-camera">
 
         {!capturedImage && (
@@ -109,9 +139,7 @@ function FaceCapture({ onCapture }) {
 
         {!cameraStarted && !capturedImage && (
           <div className="camera-message">
-            <div className="camera-message-icon">
-              📷
-            </div>
+            <div className="camera-message-icon">📷</div>
 
             <strong>Camera not started</strong>
 
@@ -168,7 +196,6 @@ function FaceCapture({ onCapture }) {
           ✓ Face captured successfully
         </div>
       )}
-
     </div>
   );
 }

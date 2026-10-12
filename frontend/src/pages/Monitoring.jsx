@@ -1,36 +1,142 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../styles/Monitoring.css";
 
 function Monitoring() {
   const videoRef = useRef(null);
-  const [cameraError, setCameraError] = useState("");
+  const streamRef = useRef(null);
+  const canvasRef = useRef(null);
 
-  useEffect(() => {
-    let stream;
+  const [cameraStarted, setCameraStarted] = useState(false);
+  const [result, setResult] = useState(null);
+  const [recognizing, setRecognizing] = useState(false);
+  const [error, setError] = useState("");
 
-    const startCamera = async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false,
-        });
+  const startCamera = async () => {
+    try {
+      setError("");
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: 640,
+          height: 480,
+          facingMode: "user",
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+
+      setCameraStarted(true);
+    } catch (err) {
+      console.error(err);
+      setError("Unable to access camera.");
+    }
+  };
+
+  const recognizeFace = async () => {
+    const video = videoRef.current;
+
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      setError("Camera is not ready.");
+      return;
+    }
+
+    setRecognizing(true);
+    setError("");
+
+    try {
+      const canvas = canvasRef.current;
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const context = canvas.getContext("2d");
+
+      context.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      const image = canvas.toDataURL("image/jpeg", 0.9);
+
+      // Send image to AI recognition service
+      const response = await fetch(
+        "http://127.0.0.1:8000/recognize",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            image,
+          }),
         }
-      } catch (error) {
-        console.error("Camera error:", error);
-        setCameraError(
-          "Camera access denied or unavailable. Please allow camera access."
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || "Recognition failed."
         );
       }
-    };
 
-    startCamera();
+      setResult(data);
 
+      // Create entry log for recognized student
+      if (data.recognized && data.student) {
+        try {
+          const logResponse = await fetch(
+            "http://localhost:5000/entry-events",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                student_id: data.student.database_id,
+                camera_id: 1,
+                event_type: "entry",
+                confidence: data.confidence,
+                review_status: "approved",
+              }),
+            }
+          );
+
+          if (!logResponse.ok) {
+            console.error(
+              "Entry log failed:",
+              await logResponse.text()
+            );
+          }
+        } catch (logError) {
+          console.error(
+            "Failed to create entry log:",
+            logError
+          );
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Recognition failed.");
+    } finally {
+      setRecognizing(false);
+    }
+  };
+
+  useEffect(() => {
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      if (streamRef.current) {
+        streamRef.current
+          .getTracks()
+          .forEach((track) => track.stop());
       }
     };
   }, []);
@@ -38,281 +144,195 @@ function Monitoring() {
   return (
     <div className="monitoring-page">
 
-      {/* HEADER */}
-      <div className="monitoring-header">
+      <div className="page-header">
         <div>
-          <h1>Live Monitoring</h1>
-          <p>AI-powered campus security monitoring</p>
+          <h2>Live Monitoring</h2>
+          <p>
+            AI-powered face recognition and campus monitoring.
+          </p>
         </div>
 
-        <div className="live-status">
-          <span className="live-dot"></span>
-          LIVE
+        <div className="monitor-status">
+          <span className="status-dot"></span>
+          System Online
         </div>
       </div>
 
+      {error && (
+        <div className="monitor-error">
+          {error}
+        </div>
+      )}
 
-      {/* CAMERA + RECOGNITION */}
-      <div className="monitoring-grid">
+      <div className="monitor-grid">
 
         {/* CAMERA */}
-        <div className="camera-card">
+        <div className="camera-panel">
 
-          <div className="camera-header">
+          <div className="panel-header">
             <div>
-              <h2>Main Gate Camera</h2>
-              <span>Camera 01</span>
+              <h3>Live Camera</h3>
+              <span>Camera 01 • Main Entrance</span>
             </div>
 
-            <div className="camera-status">
-              ● Online
-            </div>
+            {cameraStarted && (
+              <span className="live-badge">
+                ● LIVE
+              </span>
+            )}
           </div>
 
-          <div className="camera-feed">
+          <div className="live-camera">
 
-            <video
-              ref={videoRef}
-              className="live-camera"
-              autoPlay
-              muted
-              playsInline
-            />
+            {!cameraStarted && (
+              <div className="camera-placeholder">
+                <div className="camera-icon">📷</div>
 
-            {cameraError && (
-              <div className="camera-error">
-                ⚠️ {cameraError}
+                <strong>Camera not started</strong>
+
+                <span>
+                  Start the camera to begin recognition.
+                </span>
               </div>
             )}
 
-            <div className="camera-time">
-              LIVE
-            </div>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="monitor-video"
+            />
 
-            <div className="camera-label">
-              MAIN GATE • CAMERA 01
-            </div>
+            <canvas
+              ref={canvasRef}
+              style={{ display: "none" }}
+            />
+
+          </div>
+
+          <div className="camera-actions">
+
+            {!cameraStarted ? (
+              <button
+                className="start-camera-btn"
+                onClick={startCamera}
+              >
+                Start Camera
+              </button>
+            ) : (
+              <button
+                className="recognize-btn"
+                onClick={recognizeFace}
+                disabled={recognizing}
+              >
+                {recognizing
+                  ? "Recognizing..."
+                  : "Recognize Face"}
+              </button>
+            )}
 
           </div>
 
         </div>
 
+        {/* RECOGNITION */}
+        <div className="recognition-panel">
 
-        {/* AI RECOGNITION */}
-        <div className="recognition-card">
-
-          <div className="card-title">
-            <h2>Person Detected</h2>
-            <span>AI Recognition</span>
+          <div className="panel-header">
+            <div>
+              <h3>Recognition Result</h3>
+              <span>Latest AI analysis</span>
+            </div>
           </div>
 
+          {!result && (
+            <div className="no-result">
+              <div>🔍</div>
 
-          {/* CURRENT RESULT */}
-          <div className="recognition-result authorized">
+              <strong>No recognition yet</strong>
 
-            <div className="status-icon">
-              ✓
+              <span>
+                Capture a face to identify the person.
+              </span>
             </div>
+          )}
 
-            <div className="status-content">
+          {result && result.recognized && (
+            <div className="recognized-result">
 
-              <span className="status-label">
-                AUTHORIZED
+              <div className="recognized-icon">
+                ✓
+              </div>
+
+              <h2>{result.student.name}</h2>
+
+              <span className="authorized-badge">
+                Authorized Student
               </span>
 
-              <h2>
-                Test Student
-              </h2>
+              <div className="student-details">
+
+                <div>
+                  <span>Student ID</span>
+                  <strong>
+                    {result.student.student_id}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Department</span>
+                  <strong>
+                    {result.student.department}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Year</span>
+                  <strong>
+                    {result.student.year}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Confidence</span>
+                  <strong>
+                    {(result.confidence * 100).toFixed(1)}%
+                  </strong>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {result && !result.recognized && (
+            <div className="unknown-result">
+
+              <div className="unknown-icon">
+                ?
+              </div>
+
+              <h2>Unknown Person</h2>
+
+              <span className="review-badge">
+                Needs Review
+              </span>
 
               <p>
-                Student ID: <strong>STU001</strong>
+                No sufficiently confident match was found
+                among registered students.
               </p>
 
+              {result.confidence !== undefined && (
+                <div className="confidence">
+                  Similarity:{" "}
+                  {(result.confidence * 100).toFixed(1)}%
+                </div>
+              )}
+
             </div>
-
-          </div>
-
-
-          {/* STUDENT DETAILS */}
-          <div className="student-details">
-
-            <div className="detail-item">
-              <span>Name</span>
-              <strong>Test Student</strong>
-            </div>
-
-            <div className="detail-item">
-              <span>Student ID</span>
-              <strong>STU001</strong>
-            </div>
-
-            <div className="detail-item">
-              <span>Department</span>
-              <strong>Computer Science</strong>
-            </div>
-
-            <div className="detail-item">
-              <span>Year</span>
-              <strong>3</strong>
-            </div>
-
-            <div className="detail-item">
-              <span>Entry Time</span>
-              <strong>10:32:18 AM</strong>
-            </div>
-
-            <div className="detail-item">
-              <span>Status</span>
-              <strong>Authorized</strong>
-            </div>
-
-          </div>
-
-
-          <button className="view-student-btn">
-            View Student Details →
-          </button>
-
-        </div>
-
-      </div>
-
-
-      {/* TODAY'S ENTRIES */}
-      <div className="entries-card">
-
-        <div className="entries-header">
-
-          <div>
-            <h2>Today's Entries</h2>
-            <p>Recent campus entry activity</p>
-          </div>
-
-          <button className="refresh-btn">
-            ↻ Refresh
-          </button>
-
-        </div>
-
-
-        <div className="table-wrapper">
-
-          <table>
-
-            <thead>
-              <tr>
-                <th>Person</th>
-                <th>Student ID</th>
-                <th>Department</th>
-                <th>Status</th>
-                <th>Entry Time</th>
-                <th>Camera</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              <tr>
-
-                <td>
-                  <div className="person-cell">
-
-                    <div className="person-avatar">
-                      TS
-                    </div>
-
-                    <strong>
-                      Test Student
-                    </strong>
-
-                  </div>
-                </td>
-
-                <td>STU001</td>
-
-                <td>Computer Science</td>
-
-                <td>
-                  <span className="status-badge authorized-badge">
-                    ✓ Authorized
-                  </span>
-                </td>
-
-                <td>10:32:18 AM</td>
-
-                <td>Main Gate</td>
-
-              </tr>
-
-
-              <tr>
-
-                <td>
-                  <div className="person-cell">
-
-                    <div className="person-avatar">
-                      ST
-                    </div>
-
-                    <strong>
-                      Student Two
-                    </strong>
-
-                  </div>
-                </td>
-
-                <td>STU002</td>
-
-                <td>Information Technology</td>
-
-                <td>
-                  <span className="status-badge authorized-badge">
-                    ✓ Authorized
-                  </span>
-                </td>
-
-                <td>10:29:41 AM</td>
-
-                <td>Main Gate</td>
-
-              </tr>
-
-
-              <tr>
-
-                <td>
-                  <div className="person-cell">
-
-                    <div className="unknown-avatar">
-                      ?
-                    </div>
-
-                    <strong>
-                      Unknown Person
-                    </strong>
-
-                  </div>
-                </td>
-
-                <td>—</td>
-
-                <td>—</td>
-
-                <td>
-                  <span className="status-badge unauthorized-badge">
-                    ⚠ Unauthorized
-                  </span>
-                </td>
-
-                <td>10:27:09 AM</td>
-
-                <td>Main Gate</td>
-
-              </tr>
-
-            </tbody>
-
-          </table>
+          )}
 
         </div>
 

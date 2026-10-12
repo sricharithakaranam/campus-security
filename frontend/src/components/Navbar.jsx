@@ -1,15 +1,17 @@
+import { Link } from "react-router-dom";
 import "../styles/Navbar.css";
 
 function Navbar() {
   return (
     <header className="navbar">
-      <div className="navbar-brand">
+      <Link to="/dashboard" className="navbar-brand">
         <div className="brand-icon">🛡️</div>
+
         <div>
           <h1>Campus Secure</h1>
           <span>AI Campus Monitoring</span>
         </div>
-      </div>
+      </Link>
 
       <div className="navbar-right">
         <div className="system-status">
@@ -19,6 +21,7 @@ function Navbar() {
 
         <div className="admin-profile">
           <div className="admin-avatar">A</div>
+
           <div>
             <strong>Admin</strong>
             <span>Security Officer</span>

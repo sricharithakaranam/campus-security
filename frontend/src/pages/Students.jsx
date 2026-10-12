@@ -70,14 +70,37 @@ function Students() {
         }),
       });
 
-      const data = await response.json();
+     const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to add student");
-      }
+if (!response.ok) {
+  throw new Error(data.error || "Failed to add student");
+}
 
-      setStudents([...students, data]);
+// Send the captured face to the AI service
+const aiResponse = await fetch(
+  `http://127.0.0.1:8000/enroll/${data.id}`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      image: faceImage,
+    }),
+  }
+);
 
+const aiData = await aiResponse.json();
+
+if (!aiResponse.ok) {
+  throw new Error(
+    aiData.detail || "Student created, but face enrollment failed."
+  );
+}
+
+console.log("AI enrollment:", aiData);
+
+setStudents([...students, data]);
       setFormData({
         student_id: "",
         name: "",

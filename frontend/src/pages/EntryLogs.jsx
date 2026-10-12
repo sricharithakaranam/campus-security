@@ -1,28 +1,60 @@
+import { useEffect, useState } from "react";
 import "../styles/EntryLogs.css";
 
 function EntryLogs() {
-  const logs = [
-    {
-      id: 1,
-      studentId: "STU001",
-      name: "Test Student",
-      department: "Computer Science",
-      time: "09:42 AM",
-      date: "30 Sep 2026",
-      camera: "Main Gate",
-      status: "Authorized",
-    },
-    {
-      id: 2,
-      studentId: "UNKNOWN",
-      name: "Unknown Person",
-      department: "-",
-      time: "09:51 AM",
-      date: "30 Sep 2026",
-      camera: "Main Gate",
-      status: "Unauthorized",
-    },
-  ];
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchLogs = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/entry-logs"
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch entry logs");
+      }
+
+      const data = await response.json();
+
+      setLogs(data);
+      setError("");
+    } catch (err) {
+      console.error(err);
+      setError("Unable to load entry logs.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLogs();
+
+    const interval = setInterval(fetchLogs, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTime = (time) => {
+    if (!time) return "-";
+
+    return new Date(time).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  const formatDate = (time) => {
+    if (!time) return "-";
+
+    return new Date(time).toLocaleDateString([], {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   return (
     <div className="entry-logs-page">
@@ -31,108 +63,163 @@ function EntryLogs() {
         <div>
           <h2>Entry Logs</h2>
           <p>
-            View and track campus entry activity detected by the AI system.
+            Monitor recognized campus entry events.
           </p>
         </div>
 
-        <button className="export-btn">
-          Export Logs
-        </button>
+        <div className="logs-count">
+          {logs.length} Records
+        </div>
       </div>
 
-      <div className="log-summary">
+      {error && (
+        <div className="logs-error">
+          {error}
+        </div>
+      )}
 
-        <div className="log-summary-card">
+      <div className="logs-summary">
+
+        <div className="summary-card">
           <span>Total Entries</span>
-          <strong>2</strong>
+          <strong>{logs.length}</strong>
         </div>
 
-        <div className="log-summary-card">
-          <span>Authorized</span>
-          <strong>1</strong>
+        <div className="summary-card">
+          <span>Recognized</span>
+          <strong>
+            {
+              logs.filter(
+                (log) =>
+                  log.review_status === "approved"
+              ).length
+            }
+          </strong>
         </div>
 
-        <div className="log-summary-card warning">
-          <span>Unauthorized</span>
-          <strong>1</strong>
+        <div className="summary-card">
+          <span>Needs Review</span>
+          <strong>
+            {
+              logs.filter(
+                (log) =>
+                  log.review_status !== "approved"
+              ).length
+            }
+          </strong>
         </div>
 
       </div>
 
       <div className="logs-container">
 
-        <div className="logs-toolbar">
+        <div className="logs-header">
           <h3>Recent Entry Activity</h3>
 
-          <div className="log-filters">
-            <input
-              type="date"
-              className="date-filter"
-            />
+          <button
+            className="refresh-btn"
+            onClick={fetchLogs}
+          >
+            ↻ Refresh
+          </button>
+        </div>
 
-            <select className="status-filter">
-              <option value="all">All Status</option>
-              <option value="authorized">Authorized</option>
-              <option value="unauthorized">Unauthorized</option>
-            </select>
+        {loading ? (
+          <div className="logs-empty">
+            Loading entry logs...
           </div>
-        </div>
+        ) : logs.length === 0 ? (
+          <div className="logs-empty">
+            <div className="empty-icon">📋</div>
 
-        <div className="logs-table-wrapper">
+            <strong>No entry logs yet</strong>
 
-          <table className="logs-table">
+            <span>
+              Recognized students will appear here
+              automatically.
+            </span>
+          </div>
+        ) : (
+          <div className="table-wrapper">
 
-            <thead>
-              <tr>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Department</th>
-                <th>Date</th>
-                <th>Entry Time</th>
-                <th>Camera</th>
-                <th>Status</th>
-              </tr>
-            </thead>
+            <table className="entry-logs-table">
 
-            <tbody>
-
-              {logs.map((log) => (
-                <tr key={log.id}>
-
-                  <td>
-                    <strong>{log.studentId}</strong>
-                  </td>
-
-                  <td>{log.name}</td>
-
-                  <td>{log.department}</td>
-
-                  <td>{log.date}</td>
-
-                  <td>{log.time}</td>
-
-                  <td>{log.camera}</td>
-
-                  <td>
-                    <span
-                      className={
-                        log.status === "Authorized"
-                          ? "log-status authorized"
-                          : "log-status unauthorized"
-                      }
-                    >
-                      ● {log.status}
-                    </span>
-                  </td>
-
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Student ID</th>
+                  <th>Department</th>
+                  <th>Camera</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Confidence</th>
+                  <th>Status</th>
                 </tr>
-              ))}
+              </thead>
 
-            </tbody>
+              <tbody>
+                {logs.map((log) => (
+                  <tr key={log.id}>
 
-          </table>
+                    <td>
+                      <strong>
+                        {log.name || "Unknown Person"}
+                      </strong>
+                    </td>
 
-        </div>
+                    <td>
+                      {log.student_id || "-"}
+                    </td>
+
+                    <td>
+                      {log.department || "-"}
+                    </td>
+
+                    <td>
+                      {log.camera_name || "-"}
+                    </td>
+
+                    <td>
+                      {formatDate(log.entry_time)}
+                    </td>
+
+                    <td>
+                      {formatTime(log.entry_time)}
+                    </td>
+
+                    <td>
+                      {log.confidence !== null &&
+                      log.confidence !== undefined
+                        ? `${(
+                            Number(log.confidence) * 100
+                          ).toFixed(1)}%`
+                        : "-"}
+                    </td>
+
+                    <td>
+                      <span
+                        className={
+                          log.review_status ===
+                          "approved"
+                            ? "log-status approved"
+                            : "log-status review"
+                        }
+                      >
+                        {log.review_status ===
+                        "approved"
+                          ? "Recognized"
+                          : "Needs Review"}
+                      </span>
+                    </td>
+
+                  </tr>
+                ))}
+              </tbody>
+
+            </table>
+
+          </div>
+        )}
 
       </div>
 
