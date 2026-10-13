@@ -19,7 +19,7 @@ function Dashboard() {
           <span className="calendar-icon">📅</span>
 
           <div>
-            <strong>06 Oct 2026</strong>
+            <strong>07 Oct 2026</strong>
             <small>
               {new Date().toLocaleTimeString("en-IN", {
                 hour: "2-digit",
