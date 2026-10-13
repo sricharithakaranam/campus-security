@@ -96,7 +96,7 @@ app.post("/entry-events", async (req, res) => {
       event_type,
       confidence,
       review_status,
-    } = req.body;
+    } = req.body; 
 
     if (!event_type) {
       return res.status(400).json({
