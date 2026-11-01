@@ -4,6 +4,7 @@
 
 # Python
 venv/
+ai-services/venv/
 __pycache__/
 *.pyc
 
