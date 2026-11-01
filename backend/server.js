@@ -24,40 +24,73 @@ app.get("/students", async (req, res) => {
 });
 
 // Add a student
+
+// Add a student
 app.post("/students", async (req, res) => {
   try {
     const { student_id, name, department, year } = req.body;
 
+    // Validate required fields
+    if (
+      !student_id ||
+      !name ||
+      !department ||
+      year === undefined ||
+      year === null
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Student ID, name, department, and year are required",
+      });
+    }
+
+    // Check whether this Student ID already exists
+    const existing = await db.query(
+      "SELECT id FROM students WHERE student_id = $1",
+      [student_id],
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error:
+          "This Student ID is already registered. Please use a unique Student ID.",
+      });
+    }
+
+    // Register the student
     const result = await db.query(
       `INSERT INTO students (student_id, name, department, year)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [student_id, name, department, year]
+      [student_id, name, department, year],
     );
 
-    res.status(201).json(result.rows[0]);
+    return res.status(201).json({
+      success: true,
+      message: "Student registered successfully",
+      student: result.rows[0],
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("Student registration error:", err);
+
+    // Handle duplicate IDs even if two requests arrive together
+    if (err.code === "23505") {
+      return res.status(409).json({
+        success: false,
+        error: "This Student ID already exists. Please use a unique ID.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: "Failed to register student",
+    });
   }
 });
 
 // TEMPORARY: Add test student
-app.get("/add-test-student", async (req, res) => {
-  try {
-    const result = await db.query(
-      `INSERT INTO students (student_id, name, department, year)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      ["STU001", "Test Student", "Computer Science", 3]
-    );
 
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
 // Get entry logs
 app.get("/entry-logs", async (req, res) => {
   try {
@@ -90,13 +123,8 @@ app.get("/entry-logs", async (req, res) => {
 // Create an entry event with server-side duplicate prevention
 app.post("/entry-events", async (req, res) => {
   try {
-    const {
-      student_id,
-      camera_id,
-      event_type,
-      confidence,
-      review_status,
-    } = req.body; 
+    const { student_id, camera_id, event_type, confidence, review_status } =
+      req.body;
 
     if (!event_type) {
       return res.status(400).json({
@@ -116,7 +144,7 @@ app.post("/entry-events", async (req, res) => {
            AND entry_time > NOW() - INTERVAL '30 seconds'
          ORDER BY entry_time DESC
          LIMIT 1`,
-        [student_id, camera_id ?? null]
+        [student_id, camera_id ?? null],
       );
 
       if (recent.rows.length > 0) {
@@ -140,7 +168,7 @@ app.post("/entry-events", async (req, res) => {
         event_type,
         confidence ?? null,
         review_status ?? "pending",
-      ]
+      ],
     );
 
     res.status(201).json({
@@ -156,7 +184,41 @@ app.post("/entry-events", async (req, res) => {
   }
 });
 
+
+app.get("/stats", async (req, res) => {
+  try {
+    const studentsResult = await db.query(
+      "SELECT COUNT(*) FROM students"
+    );
+
+    const entriesResult = await db.query(
+      "SELECT COUNT(*) FROM entry_events"
+    );
+
+    const unknownResult = await db.query(
+      "SELECT COUNT(*) FROM entry_events WHERE LOWER(event_type) = 'unknown'"
+    );
+
+    const camerasResult = await db.query(
+      "SELECT COUNT(*) FROM cameras"
+    );
+
+    res.json({
+      totalStudents: Number(studentsResult.rows[0].count),
+      totalEntries: Number(entriesResult.rows[0].count),
+      unknownPersons: Number(unknownResult.rows[0].count),
+      activeCameras: Number(camerasResult.rows[0].count)
+    });
+  } catch (error) {
+    console.error("Stats error:", error.message);
+    res.status(500).json({
+      error: "Failed to fetch dashboard statistics"
+    });
+  }
+});
+
+
 // Start server
 app.listen(5000, () => {
-  console.log("Backend running on http://localhost:5000");
+  console.log("Backend running on http://localhost:5173");
 });

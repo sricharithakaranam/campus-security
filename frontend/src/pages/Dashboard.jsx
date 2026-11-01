@@ -1,7 +1,26 @@
 import StatCard from "../components/StatCard";
 import "../styles/Dashboard.css";
+import { useEffect, useState } from "react";
 
 function Dashboard() {
+  const [totalStudents, setTotalStudents] = useState(0);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/stats")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard stats");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setTotalStudents(data.totalStudents);
+      })
+      .catch((error) => {
+        console.error("Dashboard stats error:", error);
+      });
+  }, []);
+
   return (
     <div className="dashboard">
       {/* Dashboard Header */}
@@ -17,9 +36,14 @@ function Dashboard() {
 
         <div className="dashboard-date">
           <span className="calendar-icon">📅</span>
-
           <div>
-            <strong>07 Oct 2026</strong>
+            <strong>
+              {new Date().toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })}
+            </strong>
             <small>
               {new Date().toLocaleTimeString("en-IN", {
                 hour: "2-digit",
@@ -29,14 +53,14 @@ function Dashboard() {
             </small>
           </div>
         </div>
-      </div>
-
+      </div>{" "}
+      {/* Closed dashboard-header */}
       {/* Statistics Cards */}
       <div className="stats-grid">
         <StatCard
           icon="👥"
           title="Total Registered"
-          value="1"
+          value={totalStudents}
           description="Currently registered"
           type="students"
         />
@@ -65,7 +89,7 @@ function Dashboard() {
           type="cameras"
         />
       </div>
-    </div>
+    </div> // Closed dashboard main wrapper
   );
 }
 

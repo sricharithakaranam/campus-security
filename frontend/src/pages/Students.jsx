@@ -9,6 +9,12 @@ function Students() {
   const [showForm, setShowForm] = useState(false);
   const [faceImage, setFaceImage] = useState(null);
 
+  const [enrollingStudent, setEnrollingStudent] = useState(null);
+  const [enrollMessage, setEnrollMessage] = useState("");
+  const [enrollError, setEnrollError] = useState("");
+  const [enrollImage, setEnrollImage] = useState(null);
+  const [enrollLoading, setEnrollLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     student_id: "",
     name: "",
@@ -70,37 +76,54 @@ function Students() {
         }),
       });
 
-     const data = await response.json();
+      const data = await response.json();
 
-if (!response.ok) {
-  throw new Error(data.error || "Failed to add student");
-}
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add student");
+      }
 
-// Send the captured face to the AI service
-const aiResponse = await fetch(
-  `http://127.0.0.1:8000/enroll/${data.id}`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      image: faceImage,
-    }),
-  }
-);
+      // Get the actual student object from the backend response
+      const student = data.student;
 
-const aiData = await aiResponse.json();
+      console.log("Student data:", student);
+      console.log("Student ID:", student?.id);
 
-if (!aiResponse.ok) {
-  throw new Error(
-    aiData.detail || "Student created, but face enrollment failed."
-  );
-}
+      if (!student?.id) {
+        throw new Error(
+          "Student was created, but the database ID was not returned.",
+        );
+      }
 
-console.log("AI enrollment:", aiData);
+      // Send the captured face to the AI service
+      const aiResponse = await fetch(
+        `http://127.0.0.1:8000/enroll/${student.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            image: faceImage,
+          }),
+        },
+      );
 
-setStudents([...students, data]);
+      const aiData = await aiResponse.json();
+
+      if (!aiResponse.ok) {
+        const message =
+          typeof aiData.detail === "string"
+            ? aiData.detail
+            : JSON.stringify(aiData.detail || aiData);
+
+        throw new Error(
+          message || "Student created, but face enrollment failed.",
+        );
+      }
+
+      console.log("AI enrollment:", aiData);
+
+      setStudents([...students, student]);
       setFormData({
         student_id: "",
         name: "",
@@ -116,17 +139,58 @@ setStudents([...students, data]);
     }
   };
 
+  const handleEnrollExisting = async () => {
+    if (!enrollingStudent || !enrollImage) {
+      setEnrollError("Please capture the face first.");
+      return;
+    }
+
+    setEnrollLoading(true);
+    setEnrollError("");
+    setEnrollMessage("");
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/enroll/${enrollingStudent.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ image: enrollImage }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.detail === "string"
+            ? data.detail
+            : "Face enrollment failed.",
+        );
+      }
+
+      setEnrollMessage(
+        `Face enrolled successfully for ${enrollingStudent.name}!`,
+      );
+      setEnrollingStudent(null);
+      setEnrollImage(null);
+    } catch (error) {
+      setEnrollError(error.message || "Face enrollment failed.");
+    } finally {
+      setEnrollLoading(false);
+    }
+  };
+
   return (
     <div className="students-page">
-
       {/* PAGE HEADER */}
       <div className="page-header">
         <div>
           <h2>Students</h2>
 
-          <p>
-            Manage registered students and their identity information.
-          </p>
+          <p>Manage registered students and their identity information.</p>
         </div>
 
         <button
@@ -143,13 +207,10 @@ setStudents([...students, data]);
       {/* ADD STUDENT FORM */}
       {showForm && (
         <div className="add-student-form">
-
           <h3>Add New Student</h3>
 
           <form onSubmit={handleSubmit}>
-
             <div className="form-grid">
-
               {/* STUDENT ID */}
               <div className="form-group">
                 <label>Student ID</label>
@@ -207,41 +268,31 @@ setStudents([...students, data]);
                   required
                 />
               </div>
-
             </div>
 
             {/* FACE REGISTRATION */}
             <div className="face-registration-section">
-
               <h4>Face Registration</h4>
 
-              <p>
-                Capture the student's face for identity verification.
-              </p>
+              <p>Capture the student's face for identity verification.</p>
 
               <FaceCapture
                 onCapture={(image) => {
                   setFaceImage(image);
                 }}
               />
-
             </div>
 
             {/* SAVE BUTTON */}
-            <button
-              type="submit"
-              className="save-student-btn"
-            >
+            <button type="submit" className="save-student-btn">
               Register Student
             </button>
-
           </form>
         </div>
       )}
 
       {/* SUMMARY */}
       <div className="students-summary">
-
         <div>
           <span>Total Students</span>
           <strong>{students.length}</strong>
@@ -256,7 +307,6 @@ setStudents([...students, data]);
           <span>Identity Verified</span>
           <strong>{students.length}</strong>
         </div>
-
       </div>
 
       {/* ERROR */}
@@ -272,11 +322,48 @@ setStudents([...students, data]);
         </p>
       )}
 
+      {enrollingStudent && (
+        <div className="add-student-form">
+          <h3>Register Face: {enrollingStudent.name}</h3>
+          <p>Student ID: {enrollingStudent.student_id}</p>
+
+          <FaceCapture
+            onCapture={(image) => {
+              setEnrollImage(image);
+              setEnrollError("");
+            }}
+          />
+
+          {enrollError && <p style={{ color: "red" }}>{enrollError}</p>}
+
+          <button
+            type="button"
+            className="save-student-btn"
+            disabled={!enrollImage || enrollLoading}
+            onClick={handleEnrollExisting}
+          >
+            {enrollLoading ? "Registering Face..." : "Save Face"}
+          </button>
+
+          <button
+            type="button"
+            className="view-btn"
+            onClick={() => {
+              setEnrollingStudent(null);
+              setEnrollImage(null);
+              setEnrollError("");
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {enrollMessage && <p style={{ color: "green" }}>{enrollMessage}</p>}
+
       {/* STUDENTS TABLE */}
       <div className="students-table-container">
-
         <div className="table-header">
-
           <h3>Registered Students</h3>
 
           <input
@@ -284,18 +371,12 @@ setStudents([...students, data]);
             placeholder="Search students..."
             className="student-search"
           />
-
         </div>
 
-        {loading && (
-          <p style={{ padding: "20px" }}>
-            Loading students...
-          </p>
-        )}
+        {loading && <p style={{ padding: "20px" }}>Loading students...</p>}
 
         {!loading && !error && (
           <table className="students-table">
-
             <thead>
               <tr>
                 <th>Student ID</th>
@@ -308,52 +389,42 @@ setStudents([...students, data]);
             </thead>
 
             <tbody>
-
               {students.map((student) => (
-
                 <tr key={student.id}>
+                  <td>
+                    <strong>{student.student_id}</strong>
+                  </td>
+
+                  <td>{student.name}</td>
+
+                  <td>{student.department}</td>
+
+                  <td>Year {student.year}</td>
 
                   <td>
-                    <strong>
-                      {student.student_id}
-                    </strong>
+                    <span className="student-status">● Registered</span>
                   </td>
 
                   <td>
-                    {student.name}
-                  </td>
-
-                  <td>
-                    {student.department}
-                  </td>
-
-                  <td>
-                    Year {student.year}
-                  </td>
-
-                  <td>
-                    <span className="student-status">
-                      ● Registered
-                    </span>
-                  </td>
-
-                  <td>
-                    <button className="view-btn">
-                      View
+                    <button
+                      type="button"
+                      className="view-btn"
+                      onClick={() => {
+                        setEnrollingStudent(student);
+                        setEnrollImage(null);
+                        setEnrollMessage("");
+                        setEnrollError("");
+                      }}
+                    >
+                      Register / Update Face
                     </button>
                   </td>
-
                 </tr>
-
               ))}
-
             </tbody>
-
           </table>
         )}
-
       </div>
-
     </div>
   );
 }

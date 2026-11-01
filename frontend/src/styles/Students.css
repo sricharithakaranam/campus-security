@@ -1,83 +1,128 @@
+/* ADD STUDENT FORM */
 .add-student-form {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 22px;
-  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 8px 24px rgba(15, 35, 70, 0.05);
 }
 
 .add-student-form h3 {
-  margin: 0 0 20px;
-  font-size: 16px;
-  color: #111827;
+  margin: 0 0 24px;
+  font-size: 21px;
+  font-weight: 700;
+  color: #172b4d;
 }
 
+/* FORM GRID */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 9px;
 }
 
 .form-group label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #374151;
+  font-size: 13px;
+  font-weight: 650;
+  color: #334155;
 }
 
 .form-group input {
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dbe3ef;
+  border-radius: 9px;
+  background: #f9fbff;
+  color: #17233b;
   outline: none;
-  font-size: 13px;
+  font-size: 14px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.form-group input::placeholder {
+  color: #9aa7ba;
 }
 
 .form-group input:focus {
-  border-color: #6b7280;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  background: #ffffff;
 }
 
-.save-student-btn {
-  margin-top: 20px;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 7px;
-  background: #111827;
-  color: white;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.save-student-btn:hover {
-  background: #1f2937;
-}
-
-@media (max-width: 700px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* FACE REGISTRATION */
 .face-registration-section {
-  margin-top: 24px;
-  padding: 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #f9fafb;
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px solid #e1e9f5;
+  border-radius: 13px;
+  background: #f7f9fd;
 }
 
 .face-registration-section h4 {
-  margin: 0 0 6px;
-  font-size: 16px;
-  color: #111827;
+  margin: 0 0 9px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #172b4d;
 }
 
 .face-registration-section p {
-  margin: 0 0 18px;
-  font-size: 12px;
-  color: #6b7280;
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+/* REGISTER BUTTON */
+.save-student-btn {
+  margin-top: 24px;
+  padding: 13px 22px;
+  border: none;
+  border-radius: 9px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+.save-student-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.save-student-btn:active {
+  transform: translateY(0);
+}
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+  .add-student-form {
+    padding: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .face-registration-section {
+    padding: 18px;
+  }
+
+  .save-student-btn {
+    width: 100%;
+  }
 }

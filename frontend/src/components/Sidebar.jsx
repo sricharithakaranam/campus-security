@@ -35,24 +35,19 @@ const groups = [
   },
   {
     title: "SYSTEM",
-<<<<<<< HEAD
+
     items: [["reports", "Reports", BarChart3]],
-=======
+
     items: [
       ["cameras", "Cameras", Video, "/cameras"],
       ["reports", "Reports", BarChart3, "/reports"],
       ["settings", "Settings", Settings, "/settings"],
     ],
->>>>>>> 3712306b718ef7f7a6c7e6788ff0e021743bbb02
   },
 ];
 
 export default function Sidebar() {
-<<<<<<< HEAD
   const [alerts, setAlerts] = useState(0); // to preview the badge, use useState(3)
-=======
-  const [alerts, setAlerts] = useState(0);
->>>>>>> 3712306b718ef7f7a6c7e6788ff0e021743bbb02
 
   useEffect(() => {
     const load = () => {
@@ -72,7 +67,6 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-
       {/* BRAND */}
       <div className="sb-brand">
         <span className="sb-logo">
@@ -90,33 +84,6 @@ export default function Sidebar() {
 
       {/* NAVIGATION */}
       <nav className="sb-nav">
-<<<<<<< HEAD
-        {groups.map((g) => (
-          <div key={g.title}>
-            <p className="sb-title">{g.title}</p>
-            {g.items.map(([id, label, Icon]) => (
-              <NavLink
-                key={id}
-                to={
-                  id === "dashboard"
-                    ? "/dashboard"
-                    : id === "monitoring"
-                      ? "/monitoring"
-                      : id === "students"
-                        ? "/students"
-                        : id === "logs"
-                          ? "/entry-logs"
-                          : id === "alerts"
-                            ? "/alerts"
-                            : id === "cameras"
-                              ? "/cameras"
-                              : id === "reports"
-                                ? "/reports"
-                                : "/settings"
-                }
-                className={({ isActive }) =>
-                  "sb-item" + (isActive ? " active" : "")
-=======
         {groups.map((group) => (
           <div key={group.title}>
             <p className="sb-title">{group.title}</p>
@@ -127,7 +94,6 @@ export default function Sidebar() {
                 to={path}
                 className={({ isActive }) =>
                   `sb-item${isActive ? " active" : ""}`
->>>>>>> 3712306b718ef7f7a6c7e6788ff0e021743bbb02
                 }
               >
                 <Icon size={19} />
@@ -137,10 +103,7 @@ export default function Sidebar() {
                 {id === "alerts" && alerts > 0 && (
                   <>
                     <i className="sb-badge">{alerts}</i>
-                    <ChevronRight
-                      size={16}
-                      className="sb-chev"
-                    />
+                    <ChevronRight size={16} className="sb-chev" />
                   </>
                 )}
               </NavLink>
@@ -162,9 +125,7 @@ export default function Sidebar() {
           </span>
 
           <div>
-            <b>
-              Geethanjali Institute of Science and Technology
-            </b>
+            <b>Geethanjali Institute of Science and Technology</b>
 
             <small>
               <MapPin size={13} />
@@ -173,7 +134,6 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-
     </aside>
   );
 }

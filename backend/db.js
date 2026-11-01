@@ -4,11 +4,12 @@ const pool = new Pool({
   user: "postgres",
   host: "localhost",
   database: "campus_security",
-  password: "saivikranth",
+  password: "lahari@2005",
   port: 5432,
 });
 
-pool.connect()
+pool
+  .connect()
   .then(() => console.log("PostgreSQL connected successfully!"))
   .catch((err) => console.error("PostgreSQL connection failed:", err));
 

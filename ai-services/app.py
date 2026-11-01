@@ -8,7 +8,7 @@ import psycopg
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
+from dotenv import load_dotenv
 
 # =========================================================
 # CAMPUS GUARD AI SERVICE
@@ -19,11 +19,15 @@ app = FastAPI(
     description="Face detection and face recognition service",
     version="1.0.0",
 )
+
+# Only ONE CORS block. Add more origins here if your frontend uses another port.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "http://localhost:5174",
         "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -34,16 +38,17 @@ app.add_middleware(
 # =========================================================
 # DATABASE CONFIGURATION
 # =========================================================
-
+# The password is read from the DB_PASSWORD environment variable.
+# In Windows CMD, before starting uvicorn, run:
+#     set DB_PASSWORD=your_postgres_password
+load_dotenv()
+print("DB_PASSWORD loaded:", bool(os.getenv("DB_PASSWORD")))
 DB_CONFIG = {
     "host": "localhost",
     "port": 5432,
     "dbname": "campus_security",
     "user": "postgres",
-
-    # IMPORTANT:
-    # Replace this with your PostgreSQL password.
-    "password": "saivikranth",
+    "password": os.environ.get("DB_PASSWORD", "YOUR_POSTGRES_PASSWORD"),
 }
 
 
@@ -67,7 +72,7 @@ RECOGNIZER_MODEL = os.path.join(
 
 
 # =========================================================
-# LOAD FACE DETECTION MODEL
+# LOAD MODELS
 # =========================================================
 
 detector = cv2.FaceDetectorYN.create(
@@ -78,11 +83,6 @@ detector = cv2.FaceDetectorYN.create(
     0.3,
     5000,
 )
-
-
-# =========================================================
-# LOAD FACE RECOGNITION MODEL
-# =========================================================
 
 recognizer = cv2.FaceRecognizerSF.create(
     RECOGNIZER_MODEL,
@@ -107,18 +107,16 @@ def get_db():
 
 
 # =========================================================
-# CONVERT BASE64 IMAGE → OPENCV IMAGE
+# BASE64 IMAGE -> OPENCV IMAGE
 # =========================================================
 
 def decode_image(image_data: str):
-
-    # Remove data:image/jpeg;base64,... if present
+    # Remove "data:image/jpeg;base64," prefix if present
     if "," in image_data:
         image_data = image_data.split(",", 1)[1]
 
     try:
         raw = base64.b64decode(image_data)
-
     except Exception:
         raise HTTPException(
             status_code=400,
@@ -140,7 +138,7 @@ def decode_image(image_data: str):
 
 
 # =========================================================
-# CREATE FACE EMBEDDING
+# DETECT FACES AND CREATE EMBEDDINGS
 # =========================================================
 
 def create_embeddings(image):
@@ -180,7 +178,6 @@ def create_embeddings(image):
 
 @app.get("/")
 def root():
-
     return {
         "service": "Campus Guard AI Service",
         "status": "running",
@@ -193,7 +190,6 @@ def root():
 
 @app.get("/health")
 def health():
-
     return {
         "status": "healthy",
         "detector": "YuNet",
@@ -206,33 +202,29 @@ def health():
 # =========================================================
 
 @app.post("/enroll/{student_id}")
-def enroll_face(
-    student_id: int,
-    request: FaceRequest,
-):
+def enroll_face(student_id: int, request: FaceRequest):
+    image = decode_image(request.image)
 
-    # Convert image
-    image = decode_image(
-        request.image
-    )
+    faces = create_embeddings(image)
 
-    # Generate face embedding
-    embedding = create_embedding(
-        image
-    )
+    if len(faces) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="No face detected in the image",
+        )
 
-    # Convert embedding to database bytes
-    embedding_bytes = pickle.dumps(
-        embedding
-    )
+    if len(faces) > 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Multiple faces detected. Use a photo with one face",
+        )
+
+    embedding_bytes = pickle.dumps(faces[0]["embedding"])
 
     try:
-
         with get_db() as conn:
-
             with conn.cursor() as cur:
-
-                # Check student exists
+                # Check that the student exists
                 cur.execute(
                     """
                     SELECT id
@@ -242,34 +234,23 @@ def enroll_face(
                     (student_id,),
                 )
 
-                student = cur.fetchone()
-
-                if not student:
-
+                if not cur.fetchone():
                     raise HTTPException(
                         status_code=404,
                         detail="Student not found",
                     )
 
-                # Store/update embedding
+                # Store or update the embedding
                 cur.execute(
                     """
-                    INSERT INTO face_embeddings
-                    (
-                        student_id,
-                        embedding
-                    )
+                    INSERT INTO face_embeddings (student_id, embedding)
                     VALUES (%s, %s)
-
                     ON CONFLICT (student_id)
                     DO UPDATE SET
                         embedding = EXCLUDED.embedding,
                         created_at = CURRENT_TIMESTAMP
                     """,
-                    (
-                        student_id,
-                        embedding_bytes,
-                    ),
+                    (student_id, embedding_bytes),
                 )
 
         return {
@@ -282,12 +263,7 @@ def enroll_face(
         raise
 
     except Exception as error:
-
-        print(
-            "Database error:",
-            error,
-        )
-
+        print("Database error:", error)
         raise HTTPException(
             status_code=500,
             detail="Failed to store face embedding",
@@ -312,20 +288,27 @@ def recognize_face(request: FaceRequest):
             "message": "No faces detected",
         }
 
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT
-                    fe.student_id,
-                    fe.embedding,
-                    s.student_id,
-                    s.name,
-                    s.department,
-                    s.year
-                FROM face_embeddings fe
-                JOIN students s ON s.id = fe.student_id
-            """)
-            records = cur.fetchall()
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        fe.student_id,
+                        fe.embedding,
+                        s.student_id,
+                        s.name,
+                        s.department,
+                        s.year
+                    FROM face_embeddings fe
+                    JOIN students s ON s.id = fe.student_id
+                """)
+                records = cur.fetchall()
+    except Exception as error:
+        print("Database error:", error)
+        raise HTTPException(
+            status_code=500,
+            detail="Could not read students from the database",
+        )
 
     known_embeddings = []
 
