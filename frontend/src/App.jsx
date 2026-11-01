@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Monitoring from "./pages/Monitoring";
 import Students from "./pages/Students";
 import EntryLogs from "./pages/EntryLogs";
+import Chatbot from "./components/Chatbot";
 
 import "./styles/Alerts.css";
 import Navbar from "./components/Navbar";
@@ -23,6 +24,8 @@ function DashboardLayout({ children }) {
 
         <main className="main-content">{children}</main>
       </div>
+
+      <Chatbot />
     </div>
   );
 }

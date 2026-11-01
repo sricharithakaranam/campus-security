@@ -239,7 +239,98 @@ app.get("/stats", async (req, res) => {
 });
 
 
+
+// CAMPUSGUARD CHATBOT API
+
+app.post("/chat", async (req, res) => {
+  try {
+    const message = (req.body.message || "").toLowerCase().trim();
+
+    if (!message) {
+      return res.status(400).json({
+        error: "Please enter a message"
+      });
+    }
+
+    // Greetings
+    if (/^(hi|hello|hey|good morning|good evening)[!. ]*$/.test(message)) {
+      return res.json({
+        reply: "Hello! I'm CampusGuard AI Assistant. You can ask me about registered students, today's entries, unknown persons and cameras."
+      });
+    }
+
+    if (message.includes("help")) {
+      return res.json({
+        reply: "You can ask me: How many students are registered? How many entries today? How many unknown persons were detected? How many cameras are registered?"
+      });
+    }
+
+    // Total registered students
+    if (message.includes("student")) {
+      const result = await db.query(
+        "SELECT COUNT(*) FROM students"
+      );
+
+      return res.json({
+        reply: `CampusGuard currently has ${result.rows[0].count} registered students.`
+      });
+    }
+
+    // Today's entries
+    if (
+      message.includes("today") ||
+      message.includes("entry") ||
+      message.includes("entries")
+    ) {
+      const result = await db.query(`
+        SELECT COUNT(*)
+        FROM entry_events
+        WHERE LOWER(event_type) = 'entry'
+        AND entry_time::date = CURRENT_DATE
+      `);
+
+      return res.json({
+        reply: `There are ${result.rows[0].count} entries recorded today.`
+      });
+    }
+
+    // Unknown persons
+    if (message.includes("unknown")) {
+      const result = await db.query(`
+        SELECT COUNT(*)
+        FROM entry_events
+        WHERE LOWER(event_type) = 'unknown'
+      `);
+
+      return res.json({
+        reply: `${result.rows[0].count} unknown-person events have been recorded.`
+      });
+    }
+
+    // Registered cameras
+    if (message.includes("camera")) {
+      const result = await db.query(
+        "SELECT COUNT(*) FROM cameras"
+      );
+
+      return res.json({
+        reply: `${result.rows[0].count} cameras are registered in CampusGuard.`
+      });
+    }
+
+    return res.json({
+      reply: "I'm still learning! Try asking about students, today's entries, unknown persons or cameras."
+    });
+
+  } catch (error) {
+    console.error("Chatbot error:", error);
+
+    return res.status(500).json({
+      error: "Unable to retrieve campus information. Please check the database connection."
+    });
+  }
+});
 // Start server
 app.listen(5000, () => {
-  console.log("Backend running on http://localhost:5173");
+  console.log("Backend running on http://localhost:5000");
 });
