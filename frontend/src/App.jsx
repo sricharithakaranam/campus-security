@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import Alerts from "./pages/Alerts";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Monitoring from "./pages/Monitoring";
 import Students from "./pages/Students";
 import EntryLogs from "./pages/EntryLogs";
 
+import "./styles/Alerts.css";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
@@ -28,14 +29,7 @@ function DashboardLayout({ children }) {
 
 /* Temporary pages for modules that don't have page files yet */
 
-function Alerts() {
-  return (
-    <div>
-      <h2>Alerts</h2>
-      <p>Security alerts will appear here.</p>
-    </div>
-  );
-}
+
 
 function Cameras() {
   return (
@@ -46,14 +40,7 @@ function Cameras() {
   );
 }
 
-function Settings() {
-  return (
-    <div>
-      <h2>Settings</h2>
-      <p>System settings will appear here.</p>
-    </div>
-  );
-}
+
 
 function App() {
   return (
@@ -63,6 +50,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         {/* DASHBOARD */}
+
         <Route
           path="/dashboard"
           element={
@@ -70,7 +58,17 @@ function App() {
               <Dashboard />
             </DashboardLayout>
           }
+          
+
         />
+        <Route
+  path="/alerts"
+  element={
+    <DashboardLayout>
+      <Alerts />
+    </DashboardLayout>
+  }
+/>
 
         {/* LIVE MONITORING */}
         <Route
@@ -102,15 +100,7 @@ function App() {
           }
         />
 
-        {/* ALERTS */}
-        <Route
-          path="/alerts"
-          element={
-            <DashboardLayout>
-              <Alerts />
-            </DashboardLayout>
-          }
-        />
+       
 
         {/* CAMERAS */}
         <Route
@@ -122,15 +112,7 @@ function App() {
           }
         />
 
-        {/* SETTINGS */}
-        <Route
-          path="/settings"
-          element={
-            <DashboardLayout>
-              <Settings />
-            </DashboardLayout>
-          }
-        />
+       
       </Routes>
     </BrowserRouter>
   );

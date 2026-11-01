@@ -1,0 +1,42 @@
+.alerts-page {
+  padding: 28px;
+  color: #fff;
+}
+
+.alerts-page h1 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.alerts-page > p {
+  color: #94a3b8;
+  margin-bottom: 28px;
+}
+
+.alert-card {
+  background: #17212f;
+  border: 1px solid #713b35;
+  border-left: 4px solid #ef5350;
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 16px;
+}
+
+.alert-card h3 {
+  color: #ff7777;
+  margin-bottom: 14px;
+}
+
+.alert-card p {
+  color: #cbd5e1;
+  margin: 9px 0;
+}
+
+.no-alerts {
+  padding: 35px;
+  background: #17212f;
+  border: 1px solid #263548;
+  border-radius: 12px;
+  color: #94a3b8;
+  text-align: center;
+}

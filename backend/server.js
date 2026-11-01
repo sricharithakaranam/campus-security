@@ -22,7 +22,28 @@ app.get("/students", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.get("/alerts", async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        e.id,
+        e.event_type,
+        e.confidence,
+        e.entry_time,
+        e.review_status,
+        c.camera_name
+      FROM entry_events e
+      LEFT JOIN cameras c ON e.camera_id = c.id
+      WHERE LOWER(e.event_type) = 'unknown'
+      ORDER BY e.entry_time DESC
+    `);
 
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Alerts error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 // Add a student
 
 // Add a student

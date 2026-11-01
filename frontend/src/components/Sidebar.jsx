@@ -7,7 +7,7 @@ import {
   FileText,
   Bell,
   BarChart3,
-  Settings,
+  
   ChevronRight,
   ShieldCheck,
   MapPin,
@@ -41,7 +41,7 @@ const groups = [
     items: [
       ["cameras", "Cameras", Video, "/cameras"],
       ["reports", "Reports", BarChart3, "/reports"],
-      ["settings", "Settings", Settings, "/settings"],
+     
     ],
   },
 ];
