@@ -8,6 +8,7 @@ function Students() {
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [faceImage, setFaceImage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [enrollingStudent, setEnrollingStudent] = useState(null);
   const [enrollMessage, setEnrollMessage] = useState("");
@@ -23,23 +24,24 @@ function Students() {
   });
 
   const fetchStudents = () => {
+    setLoading(true);
+
     fetch("http://localhost:5000/students")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch students");
         }
-
         return response.json();
       })
       .then((data) => {
         setStudents(data);
-        setLoading(false);
+        setError("");
       })
       .catch((err) => {
         console.error(err);
-        setError("Unable to load students");
-        setLoading(false);
-      });
+        setError("Unable to load students. Please check the backend.");
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -56,7 +58,6 @@ function Students() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // For now, require a face capture
     if (!faceImage) {
       setError("Please capture the student's face before saving.");
       return;
@@ -82,11 +83,7 @@ function Students() {
         throw new Error(data.error || "Failed to add student");
       }
 
-      // Get the actual student object from the backend response
       const student = data.student;
-
-      console.log("Student data:", student);
-      console.log("Student ID:", student?.id);
 
       if (!student?.id) {
         throw new Error(
@@ -94,7 +91,6 @@ function Students() {
         );
       }
 
-      // Send the captured face to the AI service
       const aiResponse = await fetch(
         `http://127.0.0.1:8000/enroll/${student.id}`,
         {
@@ -121,9 +117,8 @@ function Students() {
         );
       }
 
-      console.log("AI enrollment:", aiData);
+      setStudents((previous) => [...previous, student]);
 
-      setStudents([...students, student]);
       setFormData({
         student_id: "",
         name: "",
@@ -133,6 +128,7 @@ function Students() {
 
       setFaceImage(null);
       setShowForm(false);
+      setEnrollMessage("Student registered and face enrolled successfully!");
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -174,23 +170,53 @@ function Students() {
       setEnrollMessage(
         `Face enrolled successfully for ${enrollingStudent.name}!`,
       );
+
       setEnrollingStudent(null);
       setEnrollImage(null);
-    } catch (error) {
-      setEnrollError(error.message || "Face enrollment failed.");
+    } catch (err) {
+      setEnrollError(err.message || "Face enrollment failed.");
     } finally {
       setEnrollLoading(false);
     }
   };
 
+  const filteredStudents = students.filter((student) => {
+    const query = searchQuery.toLowerCase().trim();
+
+    return (
+      String(student.student_id || "")
+        .toLowerCase()
+        .includes(query) ||
+      String(student.name || "")
+        .toLowerCase()
+        .includes(query) ||
+      String(student.department || "")
+        .toLowerCase()
+        .includes(query) ||
+      String(student.year || "")
+        .toLowerCase()
+        .includes(query)
+    );
+  });
+
+  const departmentCount = new Set(
+    students
+      .map((student) => student.department?.trim().toLowerCase())
+      .filter(Boolean),
+  ).size;
+
   return (
     <div className="students-page">
       {/* PAGE HEADER */}
-      <div className="page-header">
-        <div>
-          <h2>Students</h2>
+      <div className="students-page-header">
+        <div className="students-heading">
+          <span className="students-eyebrow">CAMPUS GUARD / MANAGEMENT</span>
 
-          <p>Manage registered students and their identity information.</p>
+          <h2>Students Management</h2>
+
+          <p>
+            Manage student records, registration and face identity enrollment.
+          </p>
         </div>
 
         <button
@@ -198,71 +224,83 @@ function Students() {
           onClick={() => {
             setShowForm(!showForm);
             setError("");
+            setEnrollMessage("");
           }}
         >
-          {showForm ? "Cancel" : "+ Add Student"}
+          <span>{showForm ? "−" : "+"}</span>
+          {showForm ? "Cancel" : "Add Student"}
         </button>
       </div>
+
+      {/* SUCCESS MESSAGE */}
+      {enrollMessage && (
+        <div className="students-alert success-alert">
+          <span>✓</span>
+          {enrollMessage}
+          <button onClick={() => setEnrollMessage("")}>×</button>
+        </div>
+      )}
+
+      {/* ERROR MESSAGE */}
+      {error && <div className="students-alert error-alert">{error}</div>}
 
       {/* ADD STUDENT FORM */}
       {showForm && (
         <div className="add-student-form">
-          <h3>Add New Student</h3>
+          <div className="form-title">
+            <div>
+              <span className="form-eyebrow">NEW REGISTRATION</span>
+              <h3>Add New Student</h3>
+              <p>Enter student information and register their face.</p>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
-              {/* STUDENT ID */}
               <div className="form-group">
                 <label>Student ID</label>
-
                 <input
                   type="text"
                   name="student_id"
                   value={formData.student_id}
                   onChange={handleChange}
-                  placeholder="STU002"
+                  placeholder="Enter student ID"
                   required
                 />
               </div>
 
-              {/* NAME */}
               <div className="form-group">
-                <label>Name</label>
-
+                <label>Student Name</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Student Name"
+                  placeholder="Enter full name"
                   required
                 />
               </div>
 
-              {/* DEPARTMENT */}
               <div className="form-group">
                 <label>Department</label>
-
                 <input
                   type="text"
                   name="department"
                   value={formData.department}
                   onChange={handleChange}
-                  placeholder="Computer Science"
+                  placeholder="Enter department"
                   required
                 />
               </div>
 
-              {/* YEAR */}
               <div className="form-group">
-                <label>Year</label>
-
+                <label>Academic Year</label>
                 <input
                   type="number"
                   name="year"
                   value={formData.year}
                   onChange={handleChange}
-                  placeholder="3"
+                  placeholder="Enter year (1-6)"
                   min="1"
                   max="6"
                   required
@@ -270,20 +308,21 @@ function Students() {
               </div>
             </div>
 
-            {/* FACE REGISTRATION */}
             <div className="face-registration-section">
               <h4>Face Registration</h4>
+              <p>
+                Capture the student's face for AI-powered identity recognition.
+              </p>
 
-              <p>Capture the student's face for identity verification.</p>
+              <FaceCapture onCapture={(image) => setFaceImage(image)} />
 
-              <FaceCapture
-                onCapture={(image) => {
-                  setFaceImage(image);
-                }}
-              />
+              {faceImage && (
+                <p className="capture-success">
+                  ✓ Face image captured successfully
+                </p>
+              )}
             </div>
 
-            {/* SAVE BUTTON */}
             <button type="submit" className="save-student-btn">
               Register Student
             </button>
@@ -291,41 +330,55 @@ function Students() {
         </div>
       )}
 
-      {/* SUMMARY */}
+      {/* STATISTICS */}
       <div className="students-summary">
-        <div>
-          <span>Total Students</span>
-          <strong>{students.length}</strong>
+        <div className="summary-card">
+          <div className="summary-icon blue-icon">
+            <span>ST</span>
+          </div>
+          <div>
+            <span>Total Students</span>
+            <strong>{students.length}</strong>
+            <small>Student records</small>
+          </div>
         </div>
 
-        <div>
-          <span>Registered</span>
-          <strong>{students.length}</strong>
+        <div className="summary-card">
+          <div className="summary-icon green-icon">
+            <span>✓</span>
+          </div>
+          <div>
+            <span>Registered Students</span>
+            <strong>{students.length}</strong>
+            <small>Available records</small>
+          </div>
         </div>
 
-        <div>
-          <span>Identity Verified</span>
-          <strong>{students.length}</strong>
+        <div className="summary-card">
+          <div className="summary-icon cyan-icon">
+            <span>DP</span>
+          </div>
+          <div>
+            <span>Departments</span>
+            <strong>{departmentCount}</strong>
+            <small>Unique departments</small>
+          </div>
         </div>
       </div>
 
-      {/* ERROR */}
-      {error && (
-        <p
-          style={{
-            padding: "10px",
-            color: "red",
-            textAlign: "center",
-          }}
-        >
-          {error}
-        </p>
-      )}
-
+      {/* EXISTING STUDENT FACE ENROLLMENT */}
       {enrollingStudent && (
-        <div className="add-student-form">
-          <h3>Register Face: {enrollingStudent.name}</h3>
-          <p>Student ID: {enrollingStudent.student_id}</p>
+        <div className="add-student-form enrollment-form">
+          <div className="form-title">
+            <div>
+              <span className="form-eyebrow">FACE ENROLLMENT</span>
+              <h3>Register Face</h3>
+              <p>
+                Student: <strong>{enrollingStudent.name}</strong> (
+                {enrollingStudent.student_id})
+              </p>
+            </div>
+          </div>
 
           <FaceCapture
             onCapture={(image) => {
@@ -334,95 +387,150 @@ function Students() {
             }}
           />
 
-          {enrollError && <p style={{ color: "red" }}>{enrollError}</p>}
+          {enrollError && <p className="inline-error">{enrollError}</p>}
 
-          <button
-            type="button"
-            className="save-student-btn"
-            disabled={!enrollImage || enrollLoading}
-            onClick={handleEnrollExisting}
-          >
-            {enrollLoading ? "Registering Face..." : "Save Face"}
-          </button>
+          <div className="enrollment-actions">
+            <button
+              type="button"
+              className="save-student-btn"
+              disabled={!enrollImage || enrollLoading}
+              onClick={handleEnrollExisting}
+            >
+              {enrollLoading ? "Registering Face..." : "Save Face"}
+            </button>
 
-          <button
-            type="button"
-            className="view-btn"
-            onClick={() => {
-              setEnrollingStudent(null);
-              setEnrollImage(null);
-              setEnrollError("");
-            }}
-          >
-            Cancel
-          </button>
+            <button
+              type="button"
+              className="cancel-btn"
+              onClick={() => {
+                setEnrollingStudent(null);
+                setEnrollImage(null);
+                setEnrollError("");
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
-
-      {enrollMessage && <p style={{ color: "green" }}>{enrollMessage}</p>}
 
       {/* STUDENTS TABLE */}
       <div className="students-table-container">
         <div className="table-header">
-          <h3>Registered Students</h3>
+          <div>
+            <span className="table-eyebrow">STUDENT DIRECTORY</span>
+            <h3>Registered Students</h3>
+            <p>View and manage all registered student records.</p>
+          </div>
 
-          <input
-            type="text"
-            placeholder="Search students..."
-            className="student-search"
-          />
+          <div className="student-search-wrapper">
+            <span className="search-icon">⌕</span>
+            <input
+              type="text"
+              placeholder="Search by name, ID or department..."
+              className="student-search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search students"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="clear-search"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
 
-        {loading && <p style={{ padding: "20px" }}>Loading students...</p>}
+        {loading ? (
+          <div className="students-empty-state">
+            <div className="loading-spinner"></div>
+            <p>Loading student records...</p>
+          </div>
+        ) : (
+          !error && (
+            <div className="students-table-scroll">
+              <table className="students-table">
+                <thead>
+                  <tr>
+                    <th>STUDENT ID</th>
+                    <th>STUDENT NAME</th>
+                    <th>DEPARTMENT</th>
+                    <th>YEAR</th>
+                    <th>STATUS</th>
+                    <th>ACTION</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filteredStudents.length > 0 ? (
+                    filteredStudents.map((student) => (
+                      <tr key={student.id ?? student.student_id}>
+                        <td>
+                          <strong className="student-id">
+                            {student.student_id}
+                          </strong>
+                        </td>
+
+                        <td>
+                          <span className="student-name">{student.name}</span>
+                        </td>
+
+                        <td>{student.department}</td>
+
+                        <td>
+                          <span className="year-badge">
+                            Year {student.year}
+                          </span>
+                        </td>
+
+                        <td>
+                          <span className="student-status">
+                            <span className="status-dot"></span>
+                            Registered
+                          </span>
+                        </td>
+
+                        <td>
+                          <button
+                            type="button"
+                            className="view-btn"
+                            onClick={() => {
+                              setEnrollingStudent(student);
+                              setEnrollImage(null);
+                              setEnrollMessage("");
+                              setEnrollError("");
+                            }}
+                          >
+                            Register / Update Face
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="no-students">
+                        {searchQuery
+                          ? "No students found matching your search."
+                          : "No student records available."}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )
+        )}
 
         {!loading && !error && (
-          <table className="students-table">
-            <thead>
-              <tr>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Department</th>
-                <th>Year</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {students.map((student) => (
-                <tr key={student.id}>
-                  <td>
-                    <strong>{student.student_id}</strong>
-                  </td>
-
-                  <td>{student.name}</td>
-
-                  <td>{student.department}</td>
-
-                  <td>Year {student.year}</td>
-
-                  <td>
-                    <span className="student-status">● Registered</span>
-                  </td>
-
-                  <td>
-                    <button
-                      type="button"
-                      className="view-btn"
-                      onClick={() => {
-                        setEnrollingStudent(student);
-                        setEnrollImage(null);
-                        setEnrollMessage("");
-                        setEnrollError("");
-                      }}
-                    >
-                      Register / Update Face
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-footer">
+            Showing <strong>{filteredStudents.length}</strong> of{" "}
+            <strong>{students.length}</strong> students
+          </div>
         )}
       </div>
     </div>

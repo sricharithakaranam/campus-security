@@ -8,6 +8,7 @@ import EntryLogs from "./pages/EntryLogs";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
+import Login from "./pages/Login";
 
 import "./styles/global.css";
 
@@ -60,7 +61,7 @@ function App() {
       <Routes>
         {/* HOME */}
         <Route path="/" element={<Home />} />
-
+        <Route path="/login" element={<Login />} />
         {/* DASHBOARD */}
         <Route
           path="/dashboard"
